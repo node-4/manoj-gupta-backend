@@ -11,12 +11,13 @@ router.use("/bills", require("../routes/billing.route"));
 router.use("/", require("../routes/billItem.route"));
 router.use("/", require("../routes/pickerBill.route"));
 router.use("/", require("../routes/packer.route"));
+router.use("/help/", require("../routes/helpandsupport"));
 
 router.use("/", require("../routes/dispatch.route"));
 router.use("/", require("../routes/reason.route"));
 
 router.use("/", require("../routes/order.route"));
-// router.use("/banners", require("../routes/banner"));
+router.use("/terms", require("../routes/terms.route"));
 router.use("/notifications", require("../routes/notification.route"));
 router.use("/aboutUs", require("../routes/aboutUs.route"));
 router.use("/faqs", require("../routes/faq.route"));

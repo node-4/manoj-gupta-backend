@@ -1,13 +1,13 @@
 const express = require('express');
 const help = require('../controllers/helpandsupport');
-const auth = require('../middleware/auth');
+const { authJwt } = require("../middleware");
 
 
 const router = express();
 
-router.post('/',auth.isAuthenticatedUser, help.AddQuery);
-router.get('/', help.getAllHelpandSupport);
-router.get('/user', auth.isAuthenticatedUser, help.getAllHelpandSupportgetByuserId);
+router.post('/addQuery',[authJwt.verifyToken], help.AddQuery);
+router.get('/getQuery', help.getAllHelpandSupport);
+router.get('/user',  [authJwt.verifyToken], help.getAllHelpandSupportgetByuserId);
 router.delete('/delete/:id', help.DeleteHelpandSupport);
 
 

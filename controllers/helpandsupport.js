@@ -8,6 +8,7 @@ exports.AddQuery = async(req,res) => {
             user: req.user._id,
             name: req.body.name, 
             email: req.body.email,
+            query: req.body.query
         }
     const Data = await helpandSupport.create(data);
     res.status(200).json({
