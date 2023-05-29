@@ -102,11 +102,20 @@ const getFeedbackById = async (req, res) => {
         return createResponse(res, 500, "Server error");
     }
 };
+const getMyFeedback = async (req, res) => {
+    try {
+        const feedback = await Feedback.find({ user: req.user.id });
+        createResponse(res, 200, "All feedback retrieved", feedback);
+    } catch (err) {
+        createResponse(res, 500, "Error retrieving feedback", err.message);
+    }
+};
 
 module.exports = {
     createFeedback,
     getAllFeedback,
     updateFeedback,
     deleteFeedback,
+    getMyFeedback,
     getFeedbackById,
 };

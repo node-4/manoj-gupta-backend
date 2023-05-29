@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const {
-    createFeedback,
-    getAllFeedback,
-    updateFeedback,
-    deleteFeedback,
-    getFeedbackById,
-} = require("../controllers/feedback");
+const {createFeedback,getAllFeedback,updateFeedback,deleteFeedback,getFeedbackById,getMyFeedback} = require("../controllers/feedback");
+const { authJwt } = require("../middleware");
 
 // Create a new feedback
 router.post("/", createFeedback);
+router.post("/my", [authJwt.verifyToken], getMyFeedback);
 
 // Get all feedbacks
 router.get("/", getAllFeedback);
