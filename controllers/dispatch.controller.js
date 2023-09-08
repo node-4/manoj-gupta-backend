@@ -2,10 +2,105 @@ const Billing = require("../models/billing");
 const { createResponse } = require("../utils/response");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const { secret, accessTokenTime } = require("../configs/auth.configs");
+const User = require("../models/user");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const dispatchsignup = async (req, res) => {
+    try {
+        const { email, employeeId, password, confirmPassword, name, mobile } = req.body;
+        console.log(req.body);
+        const emailExists = await User.findOne({ email, role: "DISPATCH" });
+        if (emailExists) {
+            return res.status(401).json({
+                message: "Email Number Already Exists",
+            });
+        }
+
+        if (employeeId) {
+            const existingEmployee = await User.findOne({ employeeId, mobile });
+            if (existingEmployee) {
+                return createResponse(res, 409, "EmployeeId already in use");
+            }
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match",
+            });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const otp = Math.floor(1000 + Math.random() * 9000);
+        const user = await User.create({
+            email: email,
+            employeeId: employeeId,
+            password: hashedPassword,
+            otp: otp,
+            name: name,
+            mobile: mobile,
+            role: "DISPATCH"
+        });
+        console.log(user);
+        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
+    } catch (err) {
+        console.log(err)
+        res.status(400).json({
+            message: err.message,
+
+        });
+    }
+};
+
+// const dispatchlogin = async (req, res) => {
+//  const { employeeId, password} = req.body;
+
+//   try {
+//     // Check if a user with the given employeeId exists in the database
+//     const user = await User.findOne({ employeeId, role: ["DISPATCH-EMPLOYEE"] });
+
+//     if (!user) {
+//       return res.status(401).json({ message: "DISPATCH-EMPLOYEE Not Found" });
+//     }
+
+//       const role = "DISPATCH-EMPLOYEE"
+//     // Check if the role matches the one stored in the database
+//     if (role !== user.role) {
+//       return res.status(401).json({ message: "Role not be Matched" });
+//     }
+
+//     // Check if the password matches the one stored in the database
+//     const isPasswordValid = bcrypt.compareSync(password, user.password);
+
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     // Create a token
+//     const token = jwt.sign({ id: user._id }, secret, {
+//       expiresIn: accessTokenTime,
+//     });
+
+//     // Send a response indicating that the user was successfully logged in
+//     return res.status(200).json({
+//       message: "User logged in successfully",
+//       token,
+//       data: user,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 const getAllBillOfDispatch = async (req, res) => {
+    // const { _id } = req.user
     try {
-        const query = {};
+        // const user = await User.findById(_id);
+        const query = { /* userId: user.id */ };
         if (req.query.mrName) {
             query.mrName = req.query.mrName;
         }
@@ -79,7 +174,9 @@ const getAllBillOfDispatch = async (req, res) => {
 };
 
 const updateBillingDispatch = async (req, res) => {
+    // const { _id } = req.user
     try {
+        // const user = await User.findById(_id);
         const { id } = req.params;
 
         const billing = await Billing.findById(id);
@@ -115,13 +212,13 @@ const updateBillingDispatch = async (req, res) => {
                 message: `Bill has been reassigned`,
             });
             console.log(notification);
-            billing.packer.reassigned = true;
+            billing.packer.reassign = true;
             await billing.save();
         }
         return res.status(200).json({
             success: true,
             message: "Billing updated successfully",
-            data: billing,
+            data: billing.packer,
         });
     } catch (error) {
         console.error(error);
@@ -144,7 +241,7 @@ const assignBillToDispatch = async (req, res) => {
         billing.dispatch.dispatchAssignee = dispatchId;
         await billing.save();
         console.log(billing.dispatch.dispatchAssignee);
-        createResponse(res, 200, "Bill assigned to dispatch successfully");
+        createResponse(res, 200, "Bill assigned to dispatch successfully", billing.dispatch);
     } catch (error) {
         console.log(error);
         createResponse(res, 500, "Server error");
@@ -152,6 +249,8 @@ const assignBillToDispatch = async (req, res) => {
 };
 
 module.exports = {
+    dispatchsignup,
+    // dispatchlogin,
     updateBillingDispatch,
     getAllBillOfDispatch,
     assignBillToDispatch,

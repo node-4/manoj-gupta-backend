@@ -2,132 +2,170 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { secret, accessTokenTime } = require("../configs/auth.configs");
 const User = require("../models/user");
-const otpService = require("../services/otp");
+const OTP = require("../services/otp")
 const { createResponse } = require("../utils/response");
 
-// Define a signup function that creates a new user document in the database
-exports.signup = async (req, res) => {
+
+const UserSignup = async (req, res) => {
     try {
-        // Check if a user with the given email already exists in the database
-        const existingUser = await User.findOne({ email: req.body.email });
-
-        if (existingUser) {
-            return createResponse(res, 409, "Email address already in use");
+        const { email, mobile, employeeId, password, confirmPassword, name, location } = req.body;
+        const emailExists = await User.findOne({ email: email,});
+        if (emailExists) {
+            return res.status(401).json({
+                message: "Email Number Already Exists",
+            });
         }
-        req.body.password = bcrypt.hashSync(req.body.password, 10);
-        // const existingPhone = await User.findOne({ phone });
-        // if (existingPhone) {
-        //     return createResponse(
-        //         res,
-        //         409,
-        //         " Mobile Number address already in use"
-        //     );
-        // }
-        // Create a new user document in the database with the given information
-        const token = Math.floor(Math.random() * 9000) + 999;
-        req.body.otp = token;
-        const newUser = new User(req.body);
 
-        await newUser.save();
+        if (employeeId) {
+            const existingEmployee = await User.findOne({ employeeId });
+            if (existingEmployee) {
+                return res.json({ message: "Already exists for this employee" })
+            }
+        }
 
-        console.log("User created", newUser);
-        // Send a response indicating that the user was successfully created
-        return createResponse(res, 201, "User created successfully", {
-            user: newUser,
-            otp: token,
+        if (mobile) {
+            const existingMobile = await User.findOne({ mobile });
+            if (existingMobile) {
+                return createResponse(res, 409, "Mobile already in use");
+            }
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match",
+            });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const confirmhashedPassword = await bcrypt.hash(password, 10);
+
+        // const otp = Math.floor(1000 + Math.random() * 9000);
+        const otp = OTP.generateOTP();
+        const user = await User.create({
+            email: email,
+            password: hashedPassword,
+            employeeId: employeeId,
+            mobile: mobile,
+            confirmhashedPassword: confirmhashedPassword,
+            otp: otp,
+            name: name,
+            location,
+            role: "USER"
         });
+        console.log(user);
+        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
     } catch (err) {
-        console.error(err);
-        return createResponse(res, 500, "Internal server error");
+        console.log(err)
+        res.status(400).json({
+            message: err.message,
+        });
     }
 };
-exports.verifyOtp = async (req, res) => {
+
+const verifyOtp = async (req, res) => {
     try {
-        const { otp } = req.body;
-        const user = await User.findOne({ _id: req.params.id });
-        if (!user) {
-            return createResponse(res, 404, "User not found");
+        const data = await User.findOne({ otp: req.body.otp });
+        if (!data) {
+            return res.status(401).json({
+                message: "Your Otp is Wrong",
+            });
+        } else {
+            // const accessToken = otpService.generateOTP(data._id.toString());
+            res.status(200).json({
+                success: true,
+                message: "Login Done ",
+                // accessToken: accessToken,
+                userId: data._id,
+            });
         }
-        if (user.otp !== otp) {
-            return createResponse(res, 401, "Invalid OTP");
-        }
-        user.otp = null;
-        user.mobileVerified = true;
-        await user.save();
-        return createResponse(res, 200, " verified successfully");
     } catch (err) {
-        console.error(err);
-        return createResponse(res, 500, "Internal server error");
+        res.status(400).json({
+            message: err.message,
+        });
     }
 };
 
-// Define a login function that checks the user's credentials and sends an OTP for authentication
-exports.login = async (req, res) => {
-    const { email, password } = req.body;
-
+const Userlogin = async (req, res) => {
+    const { employeeId, password, role, email } = req.body;
+    // console.log(employeeId, password);
     try {
-        // Check if a user with the given email exists in the database
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return createResponse(res, 401, "Invalid credentials");
+        if ((employeeId != (null || undefined)) && (role != (null || undefined))) {
+            const user = await User.findOne({ employeeId, role });
+            if (!user) {
+                return res.status(401).json({ message: "User not found" });
+            }
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: "Invalid credentials" });
+            }
+            const token = jwt.sign({ id: user._id }, secret, { expiresIn: accessTokenTime, });
+            return res.status(200).json({ message: "User logged in successfully", token, data: user, });
         }
-        // Check if the password matches the one stored in the database
-        const isPasswordValid = bcrypt.compareSync(password, user.password);
-        if (!isPasswordValid) {
-            return createResponse(res, 401, "Invalid credentials");
+        if ((email != (null || undefined)) && (role != (null || undefined))) {
+            const user = await User.findOne({ email, role });
+            if (!user) {
+                return res.status(401).json({ message: "User not found" });
+            }
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: "Invalid credentials" });
+            }
+            const token = jwt.sign({ id: user._id }, secret, { expiresIn: accessTokenTime, });
+            return res.status(200).json({ message: "User logged in successfully", token, data: user, });
         }
-        const accessToken = jwt.sign({ id: user._id }, secret, {
-            expiresIn: accessTokenTime,
-        });
-        // Generate a new OTP and send it to the user's phone number
 
-        return createResponse(res, 200, "logged In  successfully", {
-            accessToken,user
-        });
+
+        // Create a token
+
     } catch (err) {
         console.error(err);
-        return createResponse(res, 500, "Internal server error");
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
+
 require("dotenv").config();
 const nodemailer = require("nodemailer");
-exports.forgotPassword = async (req, res) => {
+
+
+const forgotPassword = async (req, res) => {
     try {
         // Extract email from request body
         const { email } = req.body;
-
+        console.log(email);
         // Generate a password reset token and save it to the user's document in the database
         const token = Math.floor(Math.random() * 9000) + 999;
         console.log(token);
         const user = await User.findOneAndUpdate(
             { email },
             {
-                resetPasswordToken: token,
+                // resetPasswordToken: token,
+                otp: token,
                 resetPasswordExpires: Date.now() + 3600000,
             },
             { new: true }
         );
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({
+                success: true,
+                message: "User not found"
+            });
         }
 
         // Create a nodemailer transporter object
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
+            host: 'smtp.ethereal.email',
             port: 587,
-            secure: false,
             auth: {
-                user: "node2@flyweis.technology",
-                pass: "ayesha@9818#",
-            },
+                user: 'jenifer71@ethereal.email',
+                pass: 'W9BeAymdFqDnjja33v'
+            }
         });
-
         // Define the email options
         const mailOptions = {
             to: email,
-            from: "node2@flyweis.technology",
+            from: "node1@flyweis.technology",
             subject: "Password reset request",
             text:
                 `OTP ${token}\n` +
@@ -146,7 +184,7 @@ exports.forgotPassword = async (req, res) => {
                 });
             }
             res.status(200).json({
-                message: "Password reset email sent successfully",
+                message: "Password Resend Email Sent Successfully",
                 otp: token,
                 userId: user._id,
             });
@@ -158,38 +196,48 @@ exports.forgotPassword = async (req, res) => {
         });
     }
 };
-exports.forgotPasswordOtp = async (req, res) => {
+
+const forgotPasswordOtp = async (req, res) => {
     try {
-        const id = req.params.id;
+        const id1 = req.params.id;
         const otp = req.body.otp;
-        const user = await User.findById(id);
+        const user = await User.findById({ _id: id1 });
+        console.log(user);
         if (!user) {
             return res.status(404).json({
                 message: "User not found",
             });
         }
-        if (user.resetPasswordToken !== otp) {
+        if (user.otp !== otp) {
             return res.status(403).json({
                 message: "Wrong otp",
             });
         }
-        res.status(200).json({ message: "otp verification is successful" });
+
+        // user.password = password;
+        // user.otp = undefined;
+        // user.resetPasswordToken = undefined;
+        // user.resetPasswordExpires = undefined;
+        // await user.save();
+        res.status(200)
+            .json({
+                status: 200,
+                message: "otp verification is successful.",
+                data: user
+            });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
     }
 };
-exports.resetPassword = async (req, res) => {
+
+const resetPassword = async (req, res) => {
     try {
-        // Extract password and confirm password from request body
         const { password, confirmPassword } = req.body;
 
-        // Verify that passwords match
         if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
         }
-
-        // Find user with valid password reset token
         const user = await User.findOne({
             _id: req.params.id,
         });
@@ -200,8 +248,8 @@ exports.resetPassword = async (req, res) => {
                 .json({ message: "Invalid or expired token" });
         }
 
-        // Update user's password and clear the reset token
         user.password = bcrypt.hashSync(password, 10);
+        user.confirmPassword = bcrypt.hashSync(confirmPassword, 10);
 
         await user.save();
 
@@ -213,3 +261,70 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
+
+
+const getUsersByRole = async (req, res) => {
+    try {
+        const { role } = req.query;
+        const query = {};
+
+        if (role) {
+            query.role = role;
+        }
+
+        const users = await User.find(query);
+
+        res.status(200).json({
+            success: true,
+            message: "Users fetched successfully",
+            data: users,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
+    }
+};
+
+const resendOtp = async (req, res) => {
+    try {
+        const otp = Math.floor(1000 + Math.random() * 9000);
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { otp: otp },
+            { new: true }
+        );
+        console.log(user);
+        if (!user) {
+            return res.status(401).json({
+                message: "No User Found ",
+            });
+        } else {
+            // const data = await sendSMS(user.mobile, otp);
+            res.status(200).json({
+                message: "OTP is Send ",
+                otp: otp,
+                data: user,
+            });
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: err.message,
+        });
+    }
+};
+
+
+module.exports = {
+    UserSignup,
+    verifyOtp,
+    Userlogin,
+    forgotPassword,
+    forgotPasswordOtp,
+    resetPassword,
+    getUsersByRole,
+    resendOtp
+}
