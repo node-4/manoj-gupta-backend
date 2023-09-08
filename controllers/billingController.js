@@ -54,7 +54,7 @@ const createBilling = async (req, res) => {
             createResponse(res, 400, "Bill number already exists");
             return;
         }
-        const newBilling = new Billing(req.body);
+        const newBilling = await Billing.create(req.body);
         await newBilling.save();
 
         createResponse(res, 201, "Bill created successfully", newBilling);
@@ -128,7 +128,7 @@ const deleteBilling = async (req, res) => {
             return;
         }
         createResponse(res, 200, "Bill deleted successfully");
-        
+
     } catch (error) {
         console.log(error);
         createResponse(res, 500, "Server error");
