@@ -145,7 +145,7 @@ const deleteNotificationById = async (req, res) => {
         createResponse(res, 200, "Notification deleted successfully!", null);
     } catch (err) {
         console.error(err);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: "Server Error",
             data: null,

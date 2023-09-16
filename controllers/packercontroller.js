@@ -9,29 +9,29 @@ const jwt = require("jsonwebtoken");
 const { secret, accessTokenTime } = require("../configs/auth.configs");
 const Packersignup = async (req, res) => {
     try {
-        const { email, employeeId, password, confirmPassword, name,mobile,location } = req.body;
+        const { email, employeeId, password, confirmPassword, name, mobile, location } = req.body;
         console.log(req.body);
-        const emailExists = await User.findOne({ email,role: "PACKER" });
+        const emailExists = await User.findOne({ email, role: "PACKER" });
         if (emailExists) {
             return res.status(401).json({
                 message: "Email Number Already Exists",
             });
         }
-        
 
-if (employeeId) {
-    const existingEmployee = await User.findOne({ employeeId });
-    if (existingEmployee) {
-        errors.push("EmployeeId already in use");
-    }
-}
 
-if (mobile) {
-    const existingMobile = await User.findOne({ mobile });
-    if (existingMobile) {
-        errors.push("Mobile already in use");
-    }
-}
+        if (employeeId) {
+            const existingEmployee = await User.findOne({ employeeId });
+            if (existingEmployee) {
+                errors.push("EmployeeId already in use");
+            }
+        }
+
+        if (mobile) {
+            const existingMobile = await User.findOne({ mobile });
+            if (existingMobile) {
+                errors.push("Mobile already in use");
+            }
+        }
 
         if (password !== confirmPassword) {
             return res.status(400).json({
@@ -53,15 +53,15 @@ if (mobile) {
             role: "PACKER",
             name: name,
             mobile: mobile,
-            location:location
+            location: location
         });
         console.log(user);
-        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
+        return res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
     } catch (err) {
         console.log(err)
-        res.status(400).json({
+        return res.status(400).json({
             message: err.message,
-            
+
         });
     }
 };

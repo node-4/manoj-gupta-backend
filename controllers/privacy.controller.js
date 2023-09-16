@@ -8,7 +8,7 @@ exports.getAllTerms = async (req, res, next) => {
             type: "PRIVACY POLICY",
         });
         if (termsAndConditions.length === 0) {
-            res.status(400).send({ success: false, message: "Privacy and policy not found" });
+            return res.status(400).send({ success: false, message: "Privacy and policy not found" });
         }
         res.json(termsAndConditions);
     } catch (err) {
@@ -46,7 +46,7 @@ exports.createTerm = async (req, res, next) => {
             content: content,
         };
         const termsAndConditions = await TermsAndConditions.create(Obj);
-        res.status(201).json(termsAndConditions);
+        return res.status(201).json(termsAndConditions);
     } catch (err) {
         next(httpError(500, err));
     }

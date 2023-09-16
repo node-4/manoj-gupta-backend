@@ -16,10 +16,10 @@ exports.getAllRoles = async (req, res, next) => {
                 .json({ status: 0, message: "Role not found" });
         }
 
-        res.status(200).json({ status: 1, success: true, data: roles });
+        return res.status(200).json({ status: 1, success: true, data: roles });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             status: 0,
             success: false,
             message: error.message,
@@ -32,11 +32,11 @@ exports.createRole = async (req, res, next) => {
     try {
         const { role } = req.body;
         const newRole = await Role.create({ role });
-        res.status(201).json({ status: 1, success: true, data: newRole });
+        return res.status(201).json({ status: 1, success: true, data: newRole });
     } catch (error) {
         console.log(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             status: 0,
             success: false,
             message: error.message,
@@ -53,11 +53,11 @@ exports.getRoleById = async (req, res, next) => {
                 .status(404)
                 .json({ status: 0, success: false, message: "Role not found" });
         }
-        res.status(200).json({ status: 1, success: true, data: role });
+        return res.status(200).json({ status: 1, success: true, data: role });
     } catch (error) {
         console.log(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             status: 0,
             success: false,
             message: error.message,
@@ -76,11 +76,11 @@ exports.updateRoleById = async (req, res, next) => {
                 .status(404)
                 .json({ status: 0, success: false, message: "Role not found" });
         }
-        res.status(200).json({ status: 1, success: true, data: role });
+        return res.status(200).json({ status: 1, success: true, data: role });
     } catch (error) {
         console.log(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             status: 0,
             success: false,
             message: error.message,
@@ -97,10 +97,10 @@ exports.deleteRoleById = async (req, res, next) => {
                 .status(404)
                 .json({ status: 0, success: false, message: "Role not found" });
         }
-        res.status(200).json({ status: 1, success: true, message: "deleted" });
+        return res.status(200).json({ status: 1, success: true, message: "deleted" });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             status: 0,
             success: false,
             message: error.message,

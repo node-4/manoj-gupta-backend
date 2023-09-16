@@ -55,25 +55,25 @@ exports.createPaymentOrder = async (req, res) => {
 
 
 exports.getPayments = async (req, res) => {
-  const { userId } = req.query;
+    const { userId } = req.query;
 
-  try {
-    const payments = await payment.find({ userId }).lean();
+    try {
+        const payments = await payment.find({ userId }).lean();
 
-    if (payments.length === 0) {
-      return createResponse(res, 200, "No payments found for the user");
+        if (payments.length === 0) {
+            return createResponse(res, 200, "No payments found for the user");
+        }
+
+        const paymentStatus = payments.map((payment) => ({
+            payment: payment,
+            //   status: payment.status,
+        }));
+
+        return createResponse(res, 200, "Payment statuses retrieved successfully", paymentStatus);
+    } catch (err) {
+        console.error(err);
+        return createResponse(res, 500, "Internal server error");
     }
-
-    const paymentStatus = payments.map((payment) => ({
-      payment: payment,
-    //   status: payment.status,
-    }));
-
-    return createResponse(res, 200, "Payment statuses retrieved successfully", paymentStatus);
-  } catch (err) {
-    console.error(err);
-    return createResponse(res, 500, "Internal server error");
-  }
 };
 
 exports.getPayment = async (req, res) => {
@@ -85,7 +85,7 @@ exports.getPayment = async (req, res) => {
         createResponse(res, 200, "payment found", Data);
     } catch (err) {
         console.log(err);
-        res.status(400).json({ message: err.message });
+        return res.status(400).json({ message: err.message });
     }
 };
 

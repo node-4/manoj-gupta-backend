@@ -24,42 +24,42 @@ const getVehicles = async (req, res) => {
 
 
 const createVehicle = async (req, res) => {
-  try {
-    const {
-      userId,
-      vehicleType,
-      model,
-      pollutionCard,
-      insurance,
-      vehicleNumber
-    } = req.body;
+    try {
+        const {
+            userId,
+            vehicleType,
+            model,
+            pollutionCard,
+            insurance,
+            vehicleNumber
+        } = req.body;
 
-      const vehicleImage = req.files["image"][0].path;
-    //   console.log(vehicleImage);
-    const registrationCertificate = req.files["registrationCertificate"][0].path;
+        const vehicleImage = req.files["image"][0].path;
+        //   console.log(vehicleImage);
+        const registrationCertificate = req.files["registrationCertificate"][0].path;
 
-    const vehicle = new Vehicle({
-      userId,
-      vehicleType,
-      model,
-      pollutionCard,
-      insurance,
-      image:vehicleImage,
-      registrationCertificate:registrationCertificate,
-      vehicleNumber
-    });
+        const vehicle = new Vehicle({
+            userId,
+            vehicleType,
+            model,
+            pollutionCard,
+            insurance,
+            image: vehicleImage,
+            registrationCertificate: registrationCertificate,
+            vehicleNumber
+        });
 
-    await vehicle.save();
+        await vehicle.save();
 
-      res.status(201).json({
-          status:200,
-          message:"Vehicle Add successfully",
-          data: vehicle
-      });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+        res.status(201).json({
+            status: 200,
+            message: "Vehicle Add successfully",
+            data: vehicle
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 };
 
 const updateVehicle = async (req, res) => {
@@ -107,10 +107,10 @@ const provideDeliveryReason = async (req, res) => {
         delivery.reason = reason;
         await delivery.save();
 
-        res.status(200).json({ message: "Delivery reason provided successfully" });
+        return res.status(200).json({ message: "Delivery reason provided successfully" });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 

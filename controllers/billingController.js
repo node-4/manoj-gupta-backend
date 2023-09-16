@@ -188,7 +188,7 @@ const getPickerByBilling = async (req, res) => {
         res.json(pickerInfo);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
 

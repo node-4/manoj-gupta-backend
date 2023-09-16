@@ -10,71 +10,71 @@ const jwt = require("jsonwebtoken");
 
 
 const Verifysignup = async (req, res) => {
-    try {
-        const { email, employeeId, password, confirmPassword, name,mobile } = req.body;
-        console.log(req.body);
-        const emailExists = await User.findOne({ email,role: "VERFIER" });
-        if (emailExists) {
-            return res.status(401).json({
-                message: "Email Number Already Exists",
-            });
-        }
-
-        if (employeeId) {
-            const existingEmployee = await User.findOne({ employeeId });
-            if (existingEmployee) {
-                errors.push("EmployeeId already in use");
-            }
-        }
-
-        if (mobile) {
-            const existingMobile = await User.findOne({ mobile });
-            if (existingMobile) {
-                errors.push("Mobile already in use");
-            }
-        }
-
-        if (password !== confirmPassword) {
-            return res.status(400).json({
-                message: "Passwords do not match",
-            });
-        }
-
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const otp = Math.floor(1000 + Math.random() * 9000);
-        const user = await User.create({
-            email: email,
-            employeeId: employeeId,
-            password: hashedPassword,
-            otp: otp,
-            name: name,
-            mobile: mobile,
-            role: "VERFIER"
-        });
-        console.log(user);
-        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
-    } catch (err) {
-        console.log(err)
-        res.status(400).json({
-            message: err.message,
-            
-        });
+  try {
+    const { email, employeeId, password, confirmPassword, name, mobile } = req.body;
+    console.log(req.body);
+    const emailExists = await User.findOne({ email, role: "VERFIER" });
+    if (emailExists) {
+      return res.status(401).json({
+        message: "Email Number Already Exists",
+      });
     }
+
+    if (employeeId) {
+      const existingEmployee = await User.findOne({ employeeId });
+      if (existingEmployee) {
+        errors.push("EmployeeId already in use");
+      }
+    }
+
+    if (mobile) {
+      const existingMobile = await User.findOne({ mobile });
+      if (existingMobile) {
+        errors.push("Mobile already in use");
+      }
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    const user = await User.create({
+      email: email,
+      employeeId: employeeId,
+      password: hashedPassword,
+      otp: otp,
+      name: name,
+      mobile: mobile,
+      role: "VERFIER"
+    });
+    console.log(user);
+    return res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({
+      message: err.message,
+
+    });
+  }
 };
 
 const Verifylogin = async (req, res) => {
- const { employeeId, password} = req.body;
+  const { employeeId, password } = req.body;
 
   try {
     // Check if a user with the given employeeId exists in the database
     const user = await User.findOne({ employeeId, role: "PICKER" });
 
     if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-      
+
     const role = "PICKER"
     // Check if the role matches the one stored in the database
     if (role !== user.role) {
@@ -229,82 +229,82 @@ const getAllBillOfVerifier = async (req, res) => {
   }
 };
 const updateBillingVerifier = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const billing = await Billing.findById(id);
+    const billing = await Billing.findById(id);
 
-        const { status, acceptanceStatus, packet, reassign,urgencyColor, comment } =
-            req.body;
-        if (!billing) {
-            return res.status(404).json({
-                success: false,
-                message: "Billing not found",
-            });
-        }
-        const bill = billing.verifier;
-
-        bill.status = status || bill.status;
-        bill.acceptanceStatus = acceptanceStatus || bill.acceptanceStatus;
-        bill.packet = packet || bill.packet;
-        bill.reassign = reassign || bill.reassign;
-        bill.comment = comment || bill.comment;
-        bill.urgencyColor = urgencyColor || bill.urgencyColor;
-        await billing.save();
-        if (billing.reassign === "Yes") {
-            const notification = await Notification.create({
-                userId: billing.picker.pickerAssignee,
-                title: "Bill Reassigned",
-                message: `Bill has been reassigned`,
-            });
-            billing.picker.reassigned = true;
-            await billing.save();
-        }
-        return res.status(200).json({
-            success: true,
-            message: "Billing updated successfully",
-            data: billing,
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+    const { status, acceptanceStatus, packet, reassign, urgencyColor, comment } =
+      req.body;
+    if (!billing) {
+      return res.status(404).json({
+        success: false,
+        message: "Billing not found",
+      });
     }
+    const bill = billing.verifier;
+
+    bill.status = status || bill.status;
+    bill.acceptanceStatus = acceptanceStatus || bill.acceptanceStatus;
+    bill.packet = packet || bill.packet;
+    bill.reassign = reassign || bill.reassign;
+    bill.comment = comment || bill.comment;
+    bill.urgencyColor = urgencyColor || bill.urgencyColor;
+    await billing.save();
+    if (billing.reassign === "Yes") {
+      const notification = await Notification.create({
+        userId: billing.picker.pickerAssignee,
+        title: "Bill Reassigned",
+        message: `Bill has been reassigned`,
+      });
+      billing.picker.reassigned = true;
+      await billing.save();
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Billing updated successfully",
+      data: billing,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 const assignBillToPacker = async (req, res) => {
-    const { id } = req.params;
-    const { packerId } = req.body;
-    try {
-        const billing = await Billing.findById(id);
-        if (!billing) {
-            createResponse(res, 404, "Bill not found");
-            return;
-        }
-        console.log(packerId, " ", billing.packer.packerAssignee);
-        billing.packer.packerAssignee = packerId;
-        billing.verifier.assigned = true;
-        await billing.save();
-        const notification = await Notification.create({
-            userId: packerId,
-            title: "New Bill Assigned",
-            message: `You have been assigned a bill`,
-        });
-        console.log(notification);
-        console.log(billing.packer.packerAssignee);
-        createResponse(res, 200, "Bill assigned to packer successfully", billing.packer);
-    } catch (error) {
-        console.log(error);
-        createResponse(res, 500, "Server error");
+  const { id } = req.params;
+  const { packerId } = req.body;
+  try {
+    const billing = await Billing.findById(id);
+    if (!billing) {
+      createResponse(res, 404, "Bill not found");
+      return;
     }
+    console.log(packerId, " ", billing.packer.packerAssignee);
+    billing.packer.packerAssignee = packerId;
+    billing.verifier.assigned = true;
+    await billing.save();
+    const notification = await Notification.create({
+      userId: packerId,
+      title: "New Bill Assigned",
+      message: `You have been assigned a bill`,
+    });
+    console.log(notification);
+    console.log(billing.packer.packerAssignee);
+    createResponse(res, 200, "Bill assigned to packer successfully", billing.packer);
+  } catch (error) {
+    console.log(error);
+    createResponse(res, 500, "Server error");
+  }
 };
 
 module.exports = {
-    Verifysignup,
-    Verifylogin,
-    updateBillingVerifier,
-    getAllBillOfVerifier,
-    assignBillToPacker,
+  Verifysignup,
+  Verifylogin,
+  updateBillingVerifier,
+  getAllBillOfVerifier,
+  assignBillToPacker,
 };

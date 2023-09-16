@@ -9,7 +9,7 @@ const { createResponse } = require("../utils/response");
 const UserSignup = async (req, res) => {
     try {
         const { email, mobile, employeeId, password, confirmPassword, name, location } = req.body;
-        const emailExists = await User.findOne({ email: email,});
+        const emailExists = await User.findOne({ email: email, });
         if (emailExists) {
             return res.status(401).json({
                 message: "Email Number Already Exists",
@@ -54,10 +54,10 @@ const UserSignup = async (req, res) => {
             role: "USER"
         });
         console.log(user);
-        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
+        return res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user });
     } catch (err) {
         console.log(err)
-        res.status(400).json({
+        return res.status(400).json({
             message: err.message,
         });
     }
@@ -72,7 +72,7 @@ const verifyOtp = async (req, res) => {
             });
         } else {
             // const accessToken = otpService.generateOTP(data._id.toString());
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
                 message: "Login Done ",
                 // accessToken: accessToken,
@@ -80,7 +80,7 @@ const verifyOtp = async (req, res) => {
             });
         }
     } catch (err) {
-        res.status(400).json({
+        return res.status(400).json({
             message: err.message,
         });
     }
@@ -183,7 +183,7 @@ const forgotPassword = async (req, res) => {
                     message: "Could not send email. Please try again later.",
                 });
             }
-            res.status(200).json({
+            return res.status(200).json({
                 message: "Password Resend Email Sent Successfully",
                 otp: token,
                 userId: user._id,
@@ -191,7 +191,7 @@ const forgotPassword = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        return res.status(500).json({
             message: "An error occurred. Please try again later.",
         });
     }
@@ -219,7 +219,7 @@ const forgotPasswordOtp = async (req, res) => {
         // user.resetPasswordToken = undefined;
         // user.resetPasswordExpires = undefined;
         // await user.save();
-        res.status(200)
+        return res.status(200)
             .json({
                 status: 200,
                 message: "otp verification is successful.",
@@ -227,7 +227,7 @@ const forgotPasswordOtp = async (req, res) => {
             });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 
@@ -253,10 +253,10 @@ const resetPassword = async (req, res) => {
 
         await user.save();
 
-        res.status(200).json({ message: "Password reset successful" });
+        return res.status(200).json({ message: "Password reset successful" });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        return res.status(500).json({
             message: "An error occurred. Please try again later.",
         });
     }
@@ -274,14 +274,14 @@ const getUsersByRole = async (req, res) => {
 
         const users = await User.find(query);
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Users fetched successfully",
             data: users,
         });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: "Server error",
         });
@@ -304,14 +304,14 @@ const resendOtp = async (req, res) => {
             });
         } else {
             // const data = await sendSMS(user.mobile, otp);
-            res.status(200).json({
+            return res.status(200).json({
                 message: "OTP is Send ",
                 otp: otp,
                 data: user,
             });
         }
     } catch (err) {
-        res.status(400).json({
+        return res.status(400).json({
             message: err.message,
         });
     }

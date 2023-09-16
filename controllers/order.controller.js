@@ -111,7 +111,7 @@ const deliveryDetails = async (req, res) => {
         res.json({ Order: order, customerName, billingAddress, mobile, billAmount, location, billItems, otp });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server Error" });
+        return res.status(500).json({ message: "Server Error" });
     }
 };
 
@@ -203,7 +203,7 @@ const getOrderSummary = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Server Error" });
+        return res.status(500).json({ message: "Server Error" });
     }
 };
 
@@ -398,7 +398,7 @@ const TodayOrder = async (req, res) => {
         res.json({ orders });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "An error occurred" });
+        return res.status(500).json({ error: "An error occurred" });
     }
 };
 
@@ -418,7 +418,7 @@ const OrderStatus = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -437,7 +437,7 @@ const verifyDeliveryOtp = async (req, res) => {
         if (order.isDelivered) {
             return res.status(400).json({ message: "Order is already delivered." });
         }
-        
+
         // Compare the provided OTP with the stored OTP
         if (otp === order.deliveryOTP) {
             // OTP is correct, mark the order as delivered and update deliveredAt timestamp
@@ -486,12 +486,12 @@ const SubmitOrder = async (req, res) => {
 
         await order.save();
 
-        res.status(200).json({
+        return res.status(200).json({
             message: "Order updated successfully",
             data: order
         });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        return res.status(500).json({ message: "Server error" });
     }
 };
 

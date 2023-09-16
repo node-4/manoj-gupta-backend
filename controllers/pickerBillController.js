@@ -46,10 +46,10 @@ const Pickersignup = async (req, res) => {
         const otp = Math.floor(1000 + Math.random() * 9000);
         const user = await User.create({ email: email, employeeId: employeeId, password: hashedPassword, confirmPassword: hashedPassword1, otp: otp, name: name, role: "PICKER" });
         console.log(user);
-        res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user, mobile: mobile });
+        return res.status(200).json({ message: "OTP is Send ", OTP: otp, data: user, mobile: mobile });
     } catch (err) {
         console.log(err)
-        res.status(400).json({
+        return res.status(400).json({
             message: err.message,
         });
     }
